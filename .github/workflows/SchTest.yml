@@ -8,9 +8,10 @@ on:
     - cron: '*/5 * * * *'
 
 jobs:
+  build-gradle-project:
    runs-on: ubuntu-latest
-    steps:
-      - name: Scheduling test
-        shell: bash
-        run: |
-          echo "This is testing"
+   steps:
+   - name: Scheduling test
+     shell: bash
+     run: |
+       echo "This is testing"
