@@ -7,8 +7,6 @@ on:
 
 jobs:
   build-gradle-project:
-    runs-on: ubuntu-latest
-    if: always()
     uses: dawidd6/action-send-mail@v2
       server_address:smtp.gmail.com
       server_port:465
