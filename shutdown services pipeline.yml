@@ -1,0 +1,87 @@
+# Stopping selected services.
+
+pr: none
+
+parameters:
+- name: SREnoviaService
+  type: boolean
+  default: false
+  displayName: SR_EnoviaService
+
+- name: IntegrationMicroservices
+  type: boolean
+  default: false
+  displayName: Integration_Microservices
+
+- name: UIService
+  type: boolean
+  default: false
+  displayName: UI_Service
+
+
+
+stages:
+  - stage: SREnoviaService_StartServices
+    displayName: 'SREnoviaService_StartServices'   
+    condition: eq(${{parameters.SREnoviaService}}, 'True')
+    jobs:
+    - deployment: SREnoviaService_StartServices
+      displayName: SREnoviaService_StartServices
+      condition: eq(${{parameters.SREnoviaService}}, 'True')
+      environment: 
+            name: SIT-MQL
+            resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - script:
+              displayName: SREnoviaService_StartServices
+               workingDirectory /opt/matrix/AzureAgent/scripts
+            - bash: |
+                echo "Stopping SREnoviaService:"
+                cd /opt/matrix/AzureAgent/scripts
+                ./StopSREnoviaService.sh
+  - stage: IntegrationMicroservices_StartServices
+    displayName: 'IntegrationMicroservices_StartServices'   
+    condition: eq(${{parameters.IntegrationMicroservices}}, 'True')
+    jobs:
+    - deployment: IntegrationMicroservices_StartServices
+      displayName: IntegrationMicroservices_StartServices
+      condition: eq(${{parameters.IntegrationMicroservices}}, 'True')
+      environment: 
+            name: SIT-MS
+            resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - script:
+              displayName: IntegrationMicroservices_StartServices
+               workingDirectory /opt/integration/AzureAgent/scripts
+            - bash: |
+                echo "Stopping IntegrationMicroservices:"
+                cd /opt/integration/AzureAgent/scripts
+                ./StoptMicroServices.sh
+  - stage: UI_Service_StartServices
+    displayName: 'UI_Service_StartServices'   
+    condition: eq(${{parameters.UIService}}, 'True')
+    jobs:
+    - deployment: UI_Service_StartServices
+      displayName: UI_Service_StartServices
+      condition: eq(${{parameters.UIService}}, 'True')
+      environment: 
+            name: SIT-UI
+            resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - script:
+              displayName: UI_Service_StartServices
+               workingDirectory /opt/specsreaderadmin/AzureAgent/scripts
+            - bash: |
+                echo "Stopping UI_Service:"
+                cd /opt/specsreaderadmin/AzureAgent/scripts
+                ./StopUIServices.sh
+
