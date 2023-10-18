@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     uses: dawidd6/action-send-mail@v2
-      server_address: smtp.gmail.com
-      server_port: 465
-      username: devopsp1234@gmail.com
-      password: testing@123456
-      subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
-      body: ${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}
-      to: rkhan2104@gmail.com,gangusantosh75@gmail.com
-      from: Devops testing ID
+      server_address:smtp.gmail.com
+      server_port:465
+      username:devopsp1234@gmail.com
+      password:testing@123456
+      subject:${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+      body:${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}
+      to:rkhan2104@gmail.com,gangusantosh75@gmail.com
+      from:Devops testing ID
