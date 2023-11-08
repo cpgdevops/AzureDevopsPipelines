@@ -1,0 +1,117 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languagesjava
+
+# no PR triggers
+pr: none
+parameters:
+- name: MicroserviceName
+  type: string
+  default: enovia-service
+  values:
+  - enovia-service
+
+- name: EnvironmentName
+  type: string
+  default: QA-MQL
+  values:
+  - QA-MQL
+  - QA-MQL.azl-spcqamql21
+  - QA-MQL.azl-spcqamql22
+  - QA-MQL.azl-spcqamql23
+  - QA-MQL.azl-spcqamql24
+
+
+stages:
+  - stage: BuildSREnoviaService
+    jobs:
+      - job: Build
+        pool:
+          vmImage: 'ubuntu-latest'
+          name: Azure Pipelines
+          demands: maven
+        
+        steps:
+          - task: Maven@3
+            displayName: 'Maven Integration Layer'
+            inputs:
+              
+              mavenPomFile: '${{parameters.MicroserviceName}}/pom.xml'
+              testRunTitle: 'Unit Test Case Run'
+              allowBrokenSymlinks: false
+              codeCoverageToolOption: JaCoCo
+              publishJUnitResults: true
+              javaHomeOption: 'JDKVersion'
+              mavenVersionOption: 'Default'
+              mavenAuthenticateFeed: false
+              effectivePomSkip: false
+              sonarQubeRunAnalysis: false
+              goals: clean package
+              
+              
+          - task: CopyFiles@2
+            displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+            inputs:
+              SourceFolder: '$(system.defaultworkingdirectory)'
+              Contents: '**/*${{parameters.MicroserviceName}}/target/**'
+              TargetFolder: '$(build.artifactstagingdirectory)'
+            condition: succeededOrFailed()
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Artifacts: drop'
+            inputs:
+              PathtoPublish: '$(build.artifactstagingdirectory)'
+            condition: succeededOrFailed()
+  - stage: DeploySREnoviaService
+    displayName: 'Deploy SREnovia Service'
+    condition: succeeded()
+    jobs:
+    - deployment: SR_Enovia_Service
+      
+      displayName: 'SR_Enovia_Service'
+      environment: 
+            name: ${{parameters.EnvironmentName}}
+            resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - script:
+              displayName: 
+               workingDirectory /opt/matrix/AzureAgent/azagent/_work/1/drop
+            - bash: |
+                echo "Current initial directory is : "
+                pwd
+                
+              displayName: 'Bash for staging eployment'
+
+  - stage: RebootSREnoviaService
+    displayName: 'Reboot SREnovia Service'
+    condition: succeeded()
+    jobs:
+    - deployment: SR_Enovia_Service
+      
+      displayName: 'SR_Enovia_Service'
+      environment: 
+            name: ${{parameters.EnvironmentName}}
+            resourceType: VirtualMachine
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - script:
+              displayName: 
+               workingDirectory /opt/matrix/AzureAgent/scripts
+            - bash: |
+                
+                cd /opt/matrix/AzureAgent/azagent/_work/1/drop/enovia-service/target
+                echo "Current initial directory is : "
+                pwd
+                cp specanywhere-0.0.1-SNAPSHOT.jar /opt/matrix/EnoviaServices
+                
+                echo "Stopping SR-enovia service on QA environment"
+                ps -ef | grep specanywhere-0.0.1-SNAPSHOT.jar | grep "/usr/DassaultSystemes/" | grep -v grep | awk '{print $2}' | xargs kill
+                cd /opt/matrix/AzureAgent/scripts
+                echo "Starting SR-enovia service on QA environment"
+                ./StartSREnoviaService.sh
+              displayName: 'Bash rebooting service'
